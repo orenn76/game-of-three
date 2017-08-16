@@ -1,0 +1,35 @@
+// declaration of plugins (1)
+['java', 'maven-publish'].each {
+    apply plugin : it
+}
+group = 'com.ninyo'
+version = '2.1.7'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile group: 'org.springframework', name: 'spring-context', version: springContextVersion
+    compile group: "com.fasterxml.jackson.core", name: "jackson-databind", version: jacksonVersion
+    compile group: 'org.jboss.resteasy', name: 'resteasy-client', version: resteasyClientVersion
+    compile group: "com.google.guava", name: "guava", version: googleGuavaVersion
+    compile group: 'com.google.code.gson', name: 'gson', version: googleGsonVersion
+    compile group: 'org.projectlombok', name: 'lombok', version: lombokVersion
+}
+
+// (1)
+task sourceJar (type : Jar) {
+    from sourceSets.main.output
+}
+publishing {
+    publications {
+        myPublication(MavenPublication) {
+            artifact (sourceJar)
+        }
+    }
+    // telling gradle to publish artifact to local directory (3)
+    repositories {
+        mavenLocal()
+    }
+}

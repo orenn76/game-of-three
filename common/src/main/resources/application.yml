@@ -1,0 +1,80 @@
+spring:
+  application:
+    name: ${SPRING_BOOT_APPLICATION_NAME:app}
+  sleuth:
+    log:
+      json:
+        enabled: true
+    zuul:
+      enabled: false
+  boot:
+    admin:
+      url: ${SPRING_BOOT_ADMIN_URL:false}
+      autoDeregistration: true
+      client:
+        enabled: false
+        serviceUrl: http://${AWS_INSTANCE_IP}:${INSTANCE_MAIN_PORT}
+        managementUrl: http://${AWS_INSTANCE_IP}:${INSTANCE_PORT_ADMIN}
+        healthUrl: http://${AWS_INSTANCE_IP}:${INSTANCE_PORT_ADMIN}/health
+  jackson:
+    deserialization:
+      fail_on_unknown_properties: false
+    serialization:
+      write_dates_as_timestamps: false
+
+cloud:
+  aws:
+    region:
+      static: eu-west-1
+      auto: false
+    credentials:
+      instanceProfile: false
+    stack:
+      auto: false
+
+health:
+  config:
+    enabled: false
+
+server:
+  port: 8080
+  server-header: HRS
+
+management:
+  port: 8081
+  security:
+    enabled: false
+  add-application-context-header: false
+
+security:
+  basic:
+    enabled: false
+
+info:
+  version: ${SPRING_BOOT_APPLICATION_VERSION:1.0.0}
+  app:
+    name: ${SPRING_BOOT_APPLICATION_NAME:app}
+    description: ${SPRING_BOOT_APPLICATION_NAME:app}
+    version: ${SPRING_BOOT_APPLICATION_VERSION:1.0.0}
+    environment: ${ENVIRONMENT_NAME:dev}
+    tier: ${TIER_NAME:local}
+    withCdn: ${WITH_CDN:no}
+
+hrs:
+  metrics:
+    enabled: false
+    cloudwatch:
+      enabled: false
+  static:
+    location: "/static"
+    versioned: true
+  devices:
+    enabled: false
+  tracking:
+    gtm-container-id: "GTM-T2PZHC"
+  geoip:
+    ip-api:
+      url: "http://ip-api.ninyo-innolab.com/json"
+    free-geoip:
+      url: "https://freegeoip.ninyo-innolab.com/json"
+      url-origin: "http://freegeoip.net/json"

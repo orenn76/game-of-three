@@ -1,0 +1,2 @@
+rootProject.name = rootProjectName
+include "player-b-application", "player-b-client", "player-b-model"

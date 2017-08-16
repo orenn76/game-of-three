@@ -1,0 +1,9 @@
+spring:
+  redis:
+    host: shared-redis.private
+    port: 6379
+    timeout: 0
+    # Long.MAX_VALUE
+    userProfileExpiration: 0x7fffffffffffffff
+    # 30 days
+    userProfileIdExpiration: 2592000

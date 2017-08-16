@@ -1,0 +1,106 @@
+<configuration>
+
+    <!-- See: https://github.com/spring-projects/spring-boot/blob/master/spring-boot/src/main/resources/org/springframework/boot/logging/logback/defaults.xml -->
+
+    <!-- Allow services to specify logging options via includes. -->
+    <include optional="true" resource="included-logback.xml"/>
+
+    <!-- So we can modify log configuration at runtime via a JMX console. -->
+    <jmxConfigurator/>
+
+    <!-- Customised so we get the trace and span data in logs. -->
+    <property name="CONSOLE_LOG_PATTERN"
+              value="%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}) %clr(${PID:- }){magenta} %clr(---){faint} %clr([trace=%X{X-Trace-Id:-},span=%X{X-Span-Id:-}]){yellow} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}"/>
+
+    <!-- Spring Boot defaults. -->
+    <conversionRule conversionWord="clr"
+                    converterClass="org.springframework.boot.logging.logback.ColorConverter"/>
+    <conversionRule conversionWord="wex"
+                    converterClass="org.springframework.boot.logging.logback.WhitespaceThrowableProxyConverter"/>
+    <conversionRule conversionWord="wEx"
+                    converterClass="org.springframework.boot.logging.logback.ExtendedWhitespaceThrowableProxyConverter"/>
+    <appender name="DEBUG_LEVEL_REMAPPER" class="org.springframework.boot.logging.logback.LevelRemappingAppender">
+        <destinationLogger>org.springframework.boot</destinationLogger>
+    </appender>
+    <logger name="org.apache.catalina.startup.DigesterFactory" level="ERROR"/>
+    <logger name="org.apache.catalina.util.LifecycleBase" level="ERROR"/>
+    <logger name="org.apache.coyote.http11.Http11NioProtocol" level="WARN"/>
+    <logger name="org.apache.sshd.common.util.SecurityUtils" level="WARN"/>
+    <logger name="org.apache.tomcat.util.net.NioSelectorPool" level="WARN"/>
+    <logger name="org.crsh.plugin" level="WARN"/>
+    <logger name="org.crsh.ssh" level="WARN"/>
+    <logger name="org.eclipse.jetty.util.component.AbstractLifeCycle" level="ERROR"/>
+    <logger name="org.hibernate.validator.internal.util.Version" level="WARN"/>
+    <logger name="org.springframework.boot.actuate.autoconfigure.CrshAutoConfiguration" level="WARN"/>
+    <logger name="feign" level="WARN"/>
+    <logger name="org.springframework.cloud.sleuth.log" additivity="false">
+        <appender-ref ref="DEBUG_LEVEL_REMAPPER"/>
+    </logger>
+    <logger name="org.springframework.boot.actuate.endpoint.jmx" additivity="false">
+        <appender-ref ref="DEBUG_LEVEL_REMAPPER"/>
+    </logger>
+    <logger name="org.thymeleaf" additivity="false">
+        <appender-ref ref="DEBUG_LEVEL_REMAPPER"/>
+    </logger>
+
+    <!-- HRS log levels. -->
+    <logger name="de.hrs" level="${LOGGING_LEVEL_DE_HRS:-DEBUG}"/>
+
+    <!-- In full environments we expect WITH_LOGGING_REDIS to be "yes". -->
+    <!-- See: http://logback.qos.ch/manual/configuration.html#conditional -->
+    <if condition='isDefined("WITH_LOGGING_REDIS") &amp;&amp; property("WITH_LOGGING_REDIS").equals("yes")'>
+        <then>
+            <!-- This logs to Redis so that Logstash can forward to Elasticsearch. -->
+            <!-- See: https://github.com/kmtong/logback-redis-appender -->
+            <!-- See: http://blog.florian-hopf.de/2015/01/logging-to-redis-using-spring-boot-and.html -->
+            <appender name="REDIS" class="com.cwbase.logback.RedisAppender">
+                <mdc>true</mdc>
+                <type>${LOGGING_TYPE}</type>
+                <source>${LOGGING_SOURCE}</source>
+                <sourcePath>${LOGGING_SOURCE_PATH}</sourcePath>
+                <key>${LOGGING_REDIS_KEY}</key>
+                <host>${LOGGING_REDIS_HOST}</host>
+                <port>${LOGGING_REDIS_PORT}</port>
+            </appender>
+            <!-- NOTE: This AsyncAppender configuration is sometimes lossy. See document linked below. -->
+            <!-- See: http://logback.qos.ch/manual/appenders.html#AsyncAppender -->
+            <appender name="ASYNC" class="ch.qos.logback.classic.AsyncAppender">
+                <queueSize>2000</queueSize>
+                <includeCallerData>true</includeCallerData>
+                <appender-ref ref="REDIS"/>
+            </appender>
+            <!-- This sends logs to the console which are available using the 'docker logs' command. -->
+            <!-- This only logs ERRORs and worse. -->
+            <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+                <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+                    <level>error</level>
+                </filter>
+                <encoder>
+                    <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+                    <charset>utf8</charset>
+                </encoder>
+            </appender>
+            <!-- Both appenders are active. -->
+            <root>
+                <level value="${LOGGING_LEVEL_ROOT:-INFO}"/>
+                <appender-ref ref="ASYNC"/>
+                <appender-ref ref="CONSOLE"/>
+            </root>
+        </then>
+        <else>
+            <!-- This logs to the console for local development environments. NOT for production usage! -->
+            <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+                <encoder>
+                    <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+                    <charset>utf8</charset>
+                </encoder>
+            </appender>
+            <!-- Only one appender for local development environments. -->
+            <root>
+                <level value="${LOGGING_LEVEL_ROOT:-INFO}"/>
+                <appender-ref ref="CONSOLE"/>
+            </root>
+        </else>
+    </if>
+
+</configuration>

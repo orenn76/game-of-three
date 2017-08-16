@@ -1,0 +1,160 @@
+// declaration of plugins (1)
+['java', 'maven-publish'].each {
+    apply plugin : it
+}
+group = 'com.ninyo'
+version = '1.0.0'
+
+buildscript {
+    repositories {
+        mavenCentral()
+        maven {
+            url 'https://maven.repository.redhat.com/ga/'
+        }
+        mavenLocal()
+    }
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+    }
+}
+
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'idea'
+    apply plugin: 'eclipse'
+    apply plugin: 'org.springframework.boot'
+    apply plugin: "application"
+
+    version = '0.0.1-SNAPSHOT'
+
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
+
+    repositories {
+        mavenCentral()
+        maven {
+            url 'https://maven.repository.redhat.com/ga/'
+        }
+        mavenLocal()
+    }
+    mainClassName = "com.ninyo.playera.Application"
+}
+
+project(':player-a-application') {
+    ext {
+        projectName = "$rootProjectName-application"
+    }
+    bootRun {
+        /* Lets you pick Spring Boot profile by system properties, e.g. gradle bootRun -Dspring.profiles.active=dev */
+        systemProperties = System.properties
+    }
+
+    dependencies {
+        // *** Internal ***
+        compile project(":player-a-model")
+        compile project(":player-a-client")
+        compile group: "com.ninyo", name: "common", version: applicationLibraryVersion
+        compile group: "com.ninyo", name: "player-b", version: playerBVersion, classifier: "client"
+        compile group: "com.ninyo", name: "player-b", version: playerBVersion, classifier: "model"
+
+        compile group: 'org.springframework.boot', name: 'spring-boot-starter-tomcat', version: springBootVersion
+        compile group: 'org.springframework', name: 'spring-webmvc', version: springtVersion
+        compile group: 'org.projectlombok', name: 'lombok', version: lombokVersion
+        testCompile group: 'org.springframework.boot', name: 'spring-boot-starter-test', version: springBootTestVersion
+        testCompile group: 'org.springframework', name: 'spring-test', version: springtVersion
+        testCompile group: 'junit', name: 'junit', version: junitVersion
+        testCompile group: 'org.mockito', name: 'mockito-all', version: mockitoVersion
+        testCompile group: 'org.powermock', name: 'powermock-api-mockito', version: powermockVersion
+        testCompile group: 'org.powermock', name: 'powermock-module-junit4', version: powermockVersion
+        testCompile 'com.codereligion:codereligion-cherry-junit-logback:1.0.0'
+        testCompile 'com.codereligion:codereligion-cherry-hamcrest-logback:1.0.0'
+        testCompile group: 'org.hamcrest', name: 'hamcrest-all', version: '1.3'
+    }
+
+    // (1)
+    task sourceJar (type : Jar) {
+        classifier = 'application'
+        from sourceSets.main.output
+    }
+    publishing {
+        publications {
+            myPublication(MavenPublication) {
+                artifact (sourceJar) { // (2)
+                    classifier = 'application'
+                }
+            }
+        }
+        // telling gradle to publish artifact to local directory (3)
+        repositories {
+            mavenLocal()
+        }
+    }
+}
+
+project(':player-a-client') {
+    ext {
+        projectName = "$rootProjectName-client"
+    }
+    dependencies {
+        compile project(":player-a-model")
+        compile group: "com.ninyo", name: "common", version: applicationLibraryVersion
+
+        compile group: 'org.springframework', name: 'spring-core', version: springtVersion
+        compile group: 'org.springframework', name: 'spring-web', version: springtVersion
+        compile group: 'org.projectlombok', name: 'lombok', version: lombokVersion
+        compile group: 'org.jboss.resteasy', name: 'resteasy-client', version: resteasyClientVersion
+        testCompile group: 'junit', name: 'junit', version: junitVersion
+        testCompile group: 'org.mockito', name: 'mockito-all', version: mockitoVersion
+    }
+
+    // (1)
+    task sourceJar (type : Jar) {
+        classifier = 'client'
+        from sourceSets.main.output
+    }
+    publishing {
+        publications {
+            myPublication(MavenPublication) {
+                artifact (sourceJar) { // (2)
+                    classifier = 'client'
+                }
+            }
+        }
+        // telling gradle to publish artifact to local directory (3)
+        repositories {
+            mavenLocal()
+        }
+    }
+}
+
+project(':player-a-model') {
+    ext {
+        projectName = "$rootProjectName-model"       
+    }
+    dependencies {
+        compile group: "com.ninyo", name: "common", version: applicationLibraryVersion
+
+        compile group: "com.fasterxml.jackson.core", name: "jackson-databind", version: jacksonVersion
+        compile group: "org.springframework.boot", name: "spring-boot-starter-validation", version: springBootVersion
+        compile group: 'org.projectlombok', name: 'lombok', version: lombokVersion
+    }
+
+    // (1)
+    task sourceJar (type : Jar) {
+        classifier = 'model'
+        from sourceSets.main.output
+    }
+    publishing {
+        publications {
+            myPublication(MavenPublication) {
+                artifact (sourceJar) { // (2)
+                    classifier = 'model'
+                }
+            }
+        }
+        // telling gradle to publish artifact to local directory (3)
+        repositories {
+            mavenLocal()
+        }
+    }
+}

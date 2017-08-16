@@ -1,0 +1,11 @@
+server:
+  port: 8080
+  #context-path: /api
+
+logging:
+  file: playera.log
+  level:
+    org.springframework.web: INFO
+
+playerBClientUrl: http://localhost:8090
+
